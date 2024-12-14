@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"log"
+	"yomiya/backend/api/auth"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
@@ -18,6 +19,7 @@ func main() {
 		log.Fatal(err.Error())
 	}
 	serverAddr = env["SERVER_ADDR"]
+	auth.Domain = serverAddr
 	if serverAddr == "" {
 		serverAddr = "localhost:8080"
 		log.Println("Fallback server-addr")
@@ -26,6 +28,10 @@ func main() {
 	if dbAddr == "" {
 		dbAddr = "root:root@tcp(localhost:3306)/test_db?allowNativePasswords=false&checkConnLiveness=false&maxAllowedPacket=0"
 		log.Println("Fallback db-addr")
+	}
+	auth.SigningKey = env["JWT_KEY"]
+	if auth.SigningKey == "" {
+		log.Fatal("Signing key can't be empty")
 	}
 
 	dbconf := dbConfig{

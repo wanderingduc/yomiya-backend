@@ -25,7 +25,7 @@ type dbConfig struct {
 func (app *application) mount() http.Handler {
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /dev/v1/test", app.getUsers)
+	mux.HandleFunc("GET /dev/v1/test", app.getUser)
 
 	return mux
 }
