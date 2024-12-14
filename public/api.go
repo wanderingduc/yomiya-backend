@@ -3,6 +3,9 @@ package main
 import (
 	"database/sql"
 	"net/http"
+	"yomiya/backend/api/middleware"
+
+	"github.com/rs/cors"
 )
 
 type application struct {
@@ -24,10 +27,29 @@ type dbConfig struct {
 
 func (app *application) mount() http.Handler {
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /dev/v1/test", app.getUser)
+	auth := app.mountAuth()
+	auth = middleware.CheckToken(auth)
 
-	return mux
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /dev/v1/create", app.createUser)
+	mux.HandleFunc("POST /dev/v1/auth", app.authUser)
+	mux.Handle("/dev/v1/auth/", auth)
+
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: []string{"GET", "POST"},
+		AllowedHeaders: []string{"Content-Type", "Authorized", "Origin"},
+	})
+
+	router := c.Handler(mux)
+
+	return router
+}
+
+func (app *application) mountAuth() http.Handler {
+	authHandler := http.NewServeMux()
+	authHandler.HandleFunc("POST /test", app.getUser)
+	return http.StripPrefix("/dev/v1/auth", authHandler)
 }
 
 func (app *application) run(mux http.Handler) error {

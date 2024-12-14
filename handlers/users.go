@@ -9,6 +9,8 @@ import (
 	"time"
 	"yomiya/backend/api/auth"
 	"yomiya/backend/api/responses"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type ClientUser struct {
@@ -27,6 +29,9 @@ func CreateUser(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
 	var response responses.JSONResponse
 	var newUser ClientUser
 	var check string
+
+	json.NewDecoder(r.Body).Decode(&newUser)
+
 	query := "SELECT username FROM users WHERE username = ?"
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
@@ -46,8 +51,20 @@ func CreateUser(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
 	query = "INSERT INTO users(username, passwd, created_at) VALUES(?, ?, CURRENT_TIMESTAMP())"
 	ctx, cancel = context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
-	_, invalid, err := db.QueryContext(ctx, query, newUser.Username, newUser.Password)
-	if err != nil || invalid != nil {
+	hashPass, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: "Could not create user",
+		}
+		response = responses.JSONResponse{
+			Success: false,
+			Data:    errResponse,
+			Meta:    nil,
+		}
+		return response, http.StatusInternalServerError
+	}
+	_, err = db.QueryContext(ctx, query, newUser.Username, hashPass)
+	if err != nil {
 		errResponse := responses.JSONError{
 			Err: "Could not create user",
 		}

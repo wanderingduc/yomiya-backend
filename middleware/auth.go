@@ -19,6 +19,7 @@ func CheckToken(next http.Handler) http.Handler {
 
 		err := auth.CheckToken(tokenString)
 		if err != nil {
+			log.Printf("[%s] failed to authenticate", client)
 			errResponse := responses.JSONError{
 				Err: "Invalid token",
 			}
@@ -30,6 +31,7 @@ func CheckToken(next http.Handler) http.Handler {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(response)
 			w.WriteHeader(http.StatusForbidden)
+			return
 		}
 		log.Printf("Authenticated [%s]", client)
 		next.ServeHTTP(w, r)

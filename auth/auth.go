@@ -38,7 +38,7 @@ func CreateJWT(username string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, err := token.SignedString(SigningKey)
+	tokenString, err := token.SignedString([]byte(SigningKey))
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func CheckToken(tokenString string) error {
 	claims := &jwt.RegisteredClaims{}
 
 	_, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
-		return SigningKey, nil
+		return []byte(SigningKey), nil
 	})
 	if err != nil {
 		return err

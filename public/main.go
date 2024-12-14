@@ -9,7 +9,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var envFile string = "../.env"
+var envFile string = ".env"
 var serverAddr, dbAddr string
 
 func main() {
@@ -51,10 +51,14 @@ func main() {
 		log.Println(err.Error())
 	}
 
+	log.Printf("Connected to DB at [%s]", dbAddr)
+
 	app := application{
 		conf: config,
 		db:   db,
 	}
+
+	log.Printf("Server open at [%s]", serverAddr)
 
 	log.Fatal(app.run(app.mount()))
 
