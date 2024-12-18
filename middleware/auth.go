@@ -13,7 +13,7 @@ func CheckToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var response responses.JSONResponse
 		h := r.Header
-		tokenString := h["Authorized"][0]
+		tokenString := h["Authorization"][0][7:]
 		client := r.RemoteAddr
 		log.Printf("Authenticating [%s]...", client)
 

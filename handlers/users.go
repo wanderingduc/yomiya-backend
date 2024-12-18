@@ -188,3 +188,41 @@ func AuthUser(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
 	return response, http.StatusAccepted
 
 }
+
+func AuthToken(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
+	var response responses.JSONResponse
+	var token string
+	err := json.NewDecoder(r.Body).Decode(&token)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: err.Error(),
+		}
+		response = responses.JSONResponse{
+			Success: false,
+			Data:    errResponse,
+			Meta:    nil,
+		}
+		return response, http.StatusBadRequest
+	}
+
+	err = auth.CheckToken(token)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: err.Error(),
+		}
+		response = responses.JSONResponse{
+			Success: false,
+			Data:    errResponse,
+			Meta:    nil,
+		}
+		return response, http.StatusBadRequest
+	}
+
+	response = responses.JSONResponse{
+		Success: true,
+		Data:    nil,
+		Meta:    nil,
+	}
+
+	return response, http.StatusAccepted
+}

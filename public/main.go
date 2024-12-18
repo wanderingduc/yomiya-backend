@@ -51,6 +51,11 @@ func main() {
 		log.Println(err.Error())
 	}
 
+	err = db.Ping()
+	if err != nil {
+		log.Println(err.Error())
+	}
+
 	log.Printf("Connected to DB at [%s]", dbAddr)
 
 	app := application{

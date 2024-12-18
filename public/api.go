@@ -31,9 +31,17 @@ func (app *application) mount() http.Handler {
 	auth = middleware.CheckToken(auth)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("POST /dev/v1/create", app.createUser)
-	mux.HandleFunc("POST /dev/v1/auth", app.authUser)
+	mux.HandleFunc("POST /dev/v1/users/create", app.createUser)
+	mux.HandleFunc("POST /dev/v1/users/auth", app.authUser)
+	mux.HandleFunc("POST /dev/v1/users/authtoken", app.authToken)
+	mux.HandleFunc("/dev/v1/test", app.testGet)
 	mux.Handle("/dev/v1/auth/", auth)
+
+	// BOOK ROUTES SHOULD BE ADDED TO AUTH MUX AFTER COMPLETION
+
+	mux.HandleFunc("POST /dev/v1/books/create", app.createBook)
+	mux.HandleFunc("POST /dev/v1/books/bookid", app.getBookByID)
+	mux.HandleFunc("POST /dev/v1/books/get", app.getBooks)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
