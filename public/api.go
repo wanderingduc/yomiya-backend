@@ -41,6 +41,7 @@ func (app *application) mount() http.Handler {
 
 	mux.HandleFunc("POST /dev/v1/books/create", app.createBook)
 	mux.HandleFunc("POST /dev/v1/books/bookid", app.getBookByID)
+	mux.HandleFunc("POST /dev/v1/books/search", app.getBooksBySearch)
 	mux.HandleFunc("POST /dev/v1/books/get", app.getBooks)
 
 	c := cors.New(cors.Options{

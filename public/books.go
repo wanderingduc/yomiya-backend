@@ -23,7 +23,11 @@ func (app *application) createBook(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) getBookByID(w http.ResponseWriter, r *http.Request) {
 
+	log.Println("Getting book")
+
 	response, status := handlers.GetBookByID(r, app.db)
+
+	log.Println(response)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -47,4 +51,17 @@ func (app *application) getBooks(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
+}
+
+func (app *application) getBooksBySearch(w http.ResponseWriter, r *http.Request) {
+
+	response, status := handlers.GetBooksBySearch(r, app.db)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }

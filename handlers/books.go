@@ -42,7 +42,7 @@ func GetBookByID(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
 		return response, http.StatusBadRequest
 	}
 
-	query := "SELECT * FROM new_books WHERE book_id = ?"
+	query := "SELECT * FROM books WHERE book_id = ?"
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 	err = db.QueryRowContext(ctx, query, reqBook.ID).Scan(&resBook.ID, &resBook.Title, &resBook.Author)
@@ -128,6 +128,66 @@ func GetBooks(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
 	}
 
 	return response, http.StatusAccepted
+}
+
+func GetBooksBySearch(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
+
+	var response responses.JSONResponse
+	var books []Book
+	var reqBooks UserBook
+
+	err := json.NewDecoder(r.Body).Decode(&reqBooks)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: err.Error(),
+		}
+		response = responses.JSONResponse{
+			Success: false,
+			Data:    errResponse,
+			Meta:    nil,
+		}
+		return response, http.StatusBadRequest
+	}
+
+	query := "SELECT * FROM books WHERE MATCH(title, author_fk) AGAINST(? IN NATURAL LANGUAGE MODE)"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
+	defer cancel()
+	rows, err := db.QueryContext(ctx, query, reqBooks.ID)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: err.Error(),
+		}
+		response = responses.JSONResponse{
+			Success: false,
+			Data:    errResponse,
+			Meta:    nil,
+		}
+		return response, http.StatusNotFound
+	}
+	books = compileBooks(rows, books)
+
+	response = responses.JSONResponse{
+		Success: true,
+		Data:    books,
+		Meta:    nil,
+	}
+
+	return response, http.StatusOK
+
+}
+
+func compileBooks(rows *sql.Rows, books []Book) []Book {
+	for {
+		var book Book
+		rows.Next()
+		err := rows.Scan(&book.ID, &book.Title, &book.Author)
+		if err != nil {
+			log.Println(err.Error())
+			break
+		}
+		books = append(books, book)
+	}
+	return books
 }
 
 func CreateFromUser(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
