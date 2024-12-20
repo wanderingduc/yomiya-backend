@@ -118,111 +118,92 @@ func GetUserByID(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
 
 }
 
-func AuthUser(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
+func AuthUser(r *http.Request, db *sql.DB) (responses.Response, int) {
 
-	var toAuth ClientUser
+	var request responses.Request
+	var response responses.Response
+	var toAuth responses.ResponseUser
 	var pass string
-	var response responses.JSONResponse
 
-	err := json.NewDecoder(r.Body).Decode(&toAuth)
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: err.Error(),
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusBadRequest
 	}
+	toAuth = request.User
 
 	query := "SELECT passwd FROM users WHERE username = ?"
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 	err = db.QueryRowContext(ctx, query, toAuth.Username).Scan(&pass)
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: err.Error(),
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusBadRequest
 	}
 
 	err = auth.CheckPassword([]byte(pass), []byte(toAuth.Password))
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: "Invalid username or password",
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusBadRequest
 	}
 
 	token, err := auth.CreateJWT(toAuth.Username)
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: err.Error(),
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusInternalServerError
 	}
 
-	response = responses.JSONResponse{
-		Success: true,
-		Data:    token,
-		Meta:    nil,
-	}
+	response.Success = true
+	response.Data.User.Username = toAuth.Username
+	response.Data.User.Jwt = token
 
 	return response, http.StatusAccepted
 
 }
 
-func AuthToken(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
-	var response responses.JSONResponse
+func AuthToken(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
 	var token string
-	err := json.NewDecoder(r.Body).Decode(&token)
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: err.Error(),
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusBadRequest
 	}
+	token = request.User.Jwt
 
 	err = auth.CheckToken(token)
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: err.Error(),
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusBadRequest
 	}
 
-	response = responses.JSONResponse{
-		Success: true,
-		Data:    nil,
-		Meta:    nil,
-	}
+	response.Success = true
 
 	return response, http.StatusAccepted
 }
