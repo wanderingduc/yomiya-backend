@@ -43,10 +43,13 @@ func (app *application) mount() http.Handler {
 	mux.HandleFunc("POST /dev/v1/books/bookid", app.getBookByID)
 	mux.HandleFunc("POST /dev/v1/books/search", app.getBooksBySearch)
 	mux.HandleFunc("POST /dev/v1/books/get", app.getBooks)
+	mux.HandleFunc("POST /dev/v1/books/lib", app.searchBooksByLib)
 
 	// LIB ROUTES SHOULD BE ADDED TO AUTH MUX AFTER COMPLETION
 
 	mux.HandleFunc("POST /dev/v1/libs/get", app.getLibs)
+	mux.HandleFunc("POST /dev/v1/libs/libid", app.getBooksByLib)
+	mux.HandleFunc("POST /dev/v1/libs/addbook", app.addBookToLib)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

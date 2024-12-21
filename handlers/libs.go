@@ -64,3 +64,43 @@ func GetLibs(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 	return response, http.StatusAccepted
 }
+
+func AddBookToLib(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
+	var user responses.ResponseUser
+	var book responses.Book
+	var lib responses.Lib
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
+	}
+	user = request.User
+	book = request.Book
+	lib = request.Lib
+
+	query := "INSERT INTO lib(lib_fk, book_fk) (SELECT libs.lib_id, books.book_id FROM libs, books WHERE libs.lib_id = ? AND books.book_id = ? AND libs.user_fk = ?)"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	_, err = db.QueryContext(ctx, query, lib.LibId, book.ID, user.Username)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusConflict
+	}
+
+	response.Success = true
+
+	return response, http.StatusAccepted
+
+}

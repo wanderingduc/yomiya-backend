@@ -156,6 +156,93 @@ func GetBooksBySearch(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 }
 
+func GetBooksByLib(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
+	var lib responses.Lib
+	var books []responses.Book
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		log.Println(err.Error())
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
+	}
+
+	lib = request.Lib
+	log.Println(lib)
+
+	query := "SELECT books.book_id, books.title, books.author_fk FROM books INNER JOIN lib ON books.book_id = lib.book_fk WHERE lib.lib_fk = ?"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(ctx, query, lib.LibId)
+	if err != nil {
+		log.Println(err.Error())
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusNotFound
+	}
+
+	books = compileBooks(rows, books)
+
+	response.Success = true
+	response.Data.Books = books
+
+	return response, http.StatusOK
+
+}
+
+func SearchBooksByLib(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
+	var lib responses.Lib
+	var books []responses.Book
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+
+		return response, http.StatusBadRequest
+	}
+
+	lib = request.Lib
+
+	query := "SELECT books.book_id, books.title, books.author_fk FROM books INNER JOIN lib ON books.book_id = lib.book_fk WHERE lib.lib_fk = ?"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	rows, err := db.QueryContext(ctx, query, lib.LibId)
+	if err != nil {
+		log.Println(err.Error())
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusNotFound
+	}
+
+	books = compileBooks(rows, books)
+
+	response.Success = true
+	response.Data.Books = books
+
+	return response, http.StatusAccepted
+
+}
+
 func compileBooks(rows *sql.Rows, books []responses.Book) []responses.Book {
 	for {
 		var book responses.Book

@@ -65,3 +65,35 @@ func (app *application) getBooksBySearch(w http.ResponseWriter, r *http.Request)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
+
+func (app *application) getBooksByLib(w http.ResponseWriter, r *http.Request) {
+
+	log.Println("Gettingbooks")
+
+	response, status := handlers.GetBooksByLib(r, app.db)
+
+	log.Println(status)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+}
+
+func (app *application) searchBooksByLib(w http.ResponseWriter, r *http.Request) {
+
+	response, status := handlers.SearchBooksByLib(r, app.db)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+}

@@ -18,3 +18,16 @@ func (app *application) getLibs(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func (app *application) addBookToLib(w http.ResponseWriter, r *http.Request) {
+
+	response, status := handlers.AddBookToLib(r, app.db)
+
+	w.WriteHeader(status)
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+
+}
