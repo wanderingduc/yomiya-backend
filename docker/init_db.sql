@@ -24,7 +24,7 @@ CREATE TABLE libs(
     lib_id VARCHAR(255) PRIMARY KEY,
     lib_name VARCHAR(255) NOT NULL,
     user_fk VARCHAR(255),
-    book_fk VARCHAR(13),
+    -- book_fk VARCHAR(13),
     FOREIGN KEY (user_fk) REFERENCES users(username),
     FOREIGN KEY (book_fk) REFERENCES books(book_id)
 );
@@ -33,7 +33,8 @@ CREATE TABLE lib(
     lib_fk VARCHAR(255) NOT NULL,
     book_fk VARCHAR(13) NOT NULL,
     FOREIGN KEY (lib_fk) REFERENCES libs(lib_id),
-    FOREIGN KEY (book_fk) REFERENCES books(book_id)
+    FOREIGN KEY (book_fk) REFERENCES books(book_id),
+    PRIMARY KEY (lib_fk, book_fk)
 );
 
 CREATE TABLE new_books(
@@ -44,3 +45,5 @@ CREATE TABLE new_books(
     user_fk VARCHAR(255),
     FOREIGN KEY (user_fk) REFERENCES users(username)
 );
+
+ALTER TABLE books ADD FULLTEXT(title, author);
