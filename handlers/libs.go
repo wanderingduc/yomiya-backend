@@ -59,6 +59,8 @@ func GetLibs(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 	}
 
+	log.Println(libs)
+
 	response.Success = true
 	response.Data.Libs = libs
 
@@ -97,6 +99,58 @@ func AddBookToLib(r *http.Request, db *sql.DB) (responses.Response, int) {
 		response.Success = false
 		response.Data.Err = errResponse
 		return response, http.StatusConflict
+	}
+
+	response.Success = true
+
+	return response, http.StatusAccepted
+
+}
+
+func DeleteLib(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
+	var user responses.ResponseUser
+	var lib responses.Lib
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
+	}
+
+	user = request.User
+	lib = request.Lib
+
+	query := "DELETE FROM lib WHERE lib_fk = ?"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	_, err = db.QueryContext(ctx, query, lib.LibId)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusNotFound
+	}
+
+	query = "DELETE FROM libs WHERE lib_id = ? AND user_fk = ?"
+	ctx, cancel = context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	_, err = db.QueryContext(ctx, query, lib.LibId, user.Username)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusNotFound
 	}
 
 	response.Success = true

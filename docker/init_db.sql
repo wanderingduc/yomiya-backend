@@ -17,6 +17,7 @@ CREATE TABLE books(
     book_id VARCHAR(13) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     author_fk VARCHAR(255),
+    summary TEXT, -- CHANGE NOT MADE TO DB
     FOREIGN KEY (author_fk) REFERENCES authors(author_id)
 );
 
@@ -24,9 +25,9 @@ CREATE TABLE libs(
     lib_id VARCHAR(255) PRIMARY KEY,
     lib_name VARCHAR(255) NOT NULL,
     user_fk VARCHAR(255),
-    -- book_fk VARCHAR(13),
+    -- book_fk VARCHAR(13), -- CHECK IF CHANGE MADE TO DB
     FOREIGN KEY (user_fk) REFERENCES users(username),
-    FOREIGN KEY (book_fk) REFERENCES books(book_id)
+    -- FOREIGN KEY (book_fk) REFERENCES books(book_id) -- REMOVE IF book_fk DELETED
 );
 
 CREATE TABLE lib(

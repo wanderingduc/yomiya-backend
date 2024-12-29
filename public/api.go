@@ -29,12 +29,14 @@ func (app *application) mount() http.Handler {
 
 	auth := app.mountAuth()
 	auth = middleware.CheckToken(auth)
+	// auth = middleware.CheckRole(auth, app.db) // NEEDS TESTING
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /dev/v1/users/create", app.createUser)
 	mux.HandleFunc("POST /dev/v1/users/auth", app.authUser)
 	mux.HandleFunc("POST /dev/v1/users/authtoken", app.authToken)
 	mux.HandleFunc("/dev/v1/test", app.testGet)
+	mux.HandleFunc("POST /dev/v1/users/userid", app.getUser)
 	mux.Handle("/dev/v1/auth/", auth)
 
 	// BOOK ROUTES SHOULD BE ADDED TO AUTH MUX AFTER COMPLETION
@@ -50,6 +52,11 @@ func (app *application) mount() http.Handler {
 	mux.HandleFunc("POST /dev/v1/libs/get", app.getLibs)
 	mux.HandleFunc("POST /dev/v1/libs/libid", app.getBooksByLib)
 	mux.HandleFunc("POST /dev/v1/libs/addbook", app.addBookToLib)
+	mux.HandleFunc("DELETE /dev/v1/libs/libid", app.deleteLib)
+
+	// ADMIN ROUTES SHOULD BE ADDED TO AUTH MUX AFTER COMPLETION
+
+	mux.HandleFunc("DELETE /dev/v1/admin/user", app.deleteUser) // NEEDS TESTING
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},

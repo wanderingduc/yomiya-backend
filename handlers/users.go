@@ -24,95 +24,89 @@ type ServerUser struct {
 	CreatedAt string `json:"created_at"`
 }
 
-func CreateUser(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
+func CreateUser(r *http.Request, db *sql.DB) (responses.Response, int) {
 
-	var response responses.JSONResponse
-	var newUser ClientUser
-	var check string
+	var request responses.Request
+	var response responses.Response
+	var newUser responses.ResponseUser
 
-	json.NewDecoder(r.Body).Decode(&newUser)
-
-	query := "SELECT username FROM users WHERE username = ?"
-	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
-	defer cancel()
-	exist := db.QueryRowContext(ctx, query, newUser.Username).Scan(&check)
-	if exist == nil {
-		errResponse := responses.JSONError{
-			Err: "User already exists",
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
-		return response, http.StatusForbidden
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
 	}
 
-	query = "INSERT INTO users(username, passwd, created_at) VALUES(?, ?, CURRENT_TIMESTAMP())"
-	ctx, cancel = context.WithTimeout(r.Context(), time.Second)
+	newUser = request.User
+
+	query := "INSERT INTO users(username, passwd, created_at) VALUES(?, ?, CURRENT_TIMESTAMP())"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: "Could not create user",
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusInternalServerError
 	}
 	_, err = db.QueryContext(ctx, query, newUser.Username, hashPass)
 	if err != nil {
-		errResponse := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: "Could not create user",
 		}
-		response = responses.JSONResponse{
-			Success: false,
-			Data:    errResponse,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusInternalServerError
 	}
 
-	response = responses.JSONResponse{
-		Success: true,
-		Data:    newUser,
-		Meta:    nil,
-	}
+	response.Success = true
+	response.Data.User = newUser
 
-	return response, http.StatusAccepted
+	return response, http.StatusCreated
 
 }
 
-func GetUserByID(r *http.Request, db *sql.DB) (responses.JSONResponse, int) {
+func GetUserByID(r *http.Request, db *sql.DB) (responses.Response, int) {
 
-	var resUser ServerUser
-	var findUser string
-	json.NewDecoder(r.Body).Decode(&findUser)
-	query := "SELECT * FROM users WHERE username = ?"
-	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
-	defer cancel()
-	err := db.QueryRowContext(ctx, query, findUser).Scan(&resUser.Username, &resUser.Password, &resUser.CreatedAt)
+	var request responses.Request
+	var response responses.Response
+	var user responses.ResponseUser
+	// var resUser ServerUser
+	// var findUser string
+
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		log.Println(err.Error())
-		eRes := responses.JSONError{
+		errResponse := responses.ResponseError{
 			Err: err.Error(),
 		}
-		response := responses.JSONResponse{
-			Success: false,
-			Data:    eRes,
-			Meta:    nil,
-		}
+		response.Success = false
+		response.Data.Err = errResponse
 		return response, http.StatusBadRequest
 	}
 
-	response := responses.JSONResponse{
-		Success: true,
-		Data:    resUser,
-		Meta:    nil,
+	user = request.User
+
+	query := "SELECT * FROM users WHERE username = ?"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	err = db.QueryRowContext(ctx, query, user.Username).Scan(&user.Username, &user.Password, &user.Jwt)
+	if err != nil {
+		log.Println(err.Error())
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
 	}
+
+	response.Success = true
+	response.Data.User = user
 
 	return response, http.StatusAccepted
 
