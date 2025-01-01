@@ -67,6 +67,62 @@ func GetLibs(r *http.Request, db *sql.DB) (responses.Response, int) {
 	return response, http.StatusAccepted
 }
 
+func GetLibsBySearch(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
+	var libs []responses.Lib
+	var reqLibs responses.Lib
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = responses.ResponseError(errResponse)
+		return response, http.StatusBadRequest
+	}
+	reqLibs = request.Lib
+
+	log.Println(reqLibs.LibName)
+
+	query := "SELECT * FROM libs WHERE MATCH(lib_id, lib_name) AGAINST(? IN NATURAL LANGUAGE MODE)"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
+	defer cancel()
+	rows, err := db.QueryContext(ctx, query, reqLibs.LibName)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = responses.ResponseError(errResponse)
+		return response, http.StatusNotFound
+	}
+	libs = compileLibs(rows, libs)
+
+	response.Success = true
+	response.Data.Libs = libs
+
+	return response, http.StatusOK
+
+}
+
+func compileLibs(rows *sql.Rows, libs []responses.Lib) []responses.Lib {
+	for {
+		var lib responses.Lib
+		var user string
+		rows.Next()
+		err := rows.Scan(&lib.LibId, &lib.LibName, &user)
+		if err != nil {
+			log.Println(err.Error())
+			break
+		}
+		libs = append(libs, lib)
+	}
+	return libs
+}
+
 func AddBookToLib(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 	var request responses.Request

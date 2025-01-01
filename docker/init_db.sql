@@ -48,3 +48,4 @@ CREATE TABLE new_books(
 );
 
 ALTER TABLE books ADD FULLTEXT(title, author);
+ALTER TABLE libs ADD FULLTEXT(lib_id, lib_name);

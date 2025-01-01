@@ -50,6 +50,7 @@ func (app *application) mount() http.Handler {
 	// LIB ROUTES SHOULD BE ADDED TO AUTH MUX AFTER COMPLETION
 
 	mux.HandleFunc("POST /dev/v1/libs/get", app.getLibs)
+	mux.HandleFunc("POST /dev/v1/libs/search", app.getLibsBySearch)
 	mux.HandleFunc("POST /dev/v1/libs/libid", app.getBooksByLib)
 	mux.HandleFunc("POST /dev/v1/libs/addbook", app.addBookToLib)
 	mux.HandleFunc("DELETE /dev/v1/libs/libid", app.deleteLib)
