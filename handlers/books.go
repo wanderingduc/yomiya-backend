@@ -249,7 +249,7 @@ func compileBooks(rows *sql.Rows, books []responses.Book) []responses.Book {
 		rows.Next()
 		err := rows.Scan(&book.ID, &book.Title, &book.Author)
 		if err != nil {
-			log.Println(err.Error())
+			// log.Println(err.Error())
 			break
 		}
 		books = append(books, book)
@@ -263,7 +263,7 @@ func CreateFromUser(r *http.Request, db *sql.DB) (responses.Response, int) {
 	var response responses.Response
 	var user string
 	var newBook responses.Book
-	err := json.NewDecoder(r.Body).Decode(&newBook)
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		errResponse := responses.JSONError{
 			Err: err.Error(),
