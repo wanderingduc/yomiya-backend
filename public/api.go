@@ -51,13 +51,14 @@ func (app *application) mount() http.Handler {
 
 	mux.HandleFunc("POST /dev/v1/libs/get", app.getLibs)
 	mux.HandleFunc("POST /dev/v1/libs/search", app.getLibsBySearch)
-	mux.HandleFunc("POST /dev/v1/libs/libid", app.getBooksByLib)
 	mux.HandleFunc("POST /dev/v1/libs/addbook", app.addBookToLib)
 	mux.HandleFunc("DELETE /dev/v1/libs/libid", app.deleteLib)
 
 	// ADMIN ROUTES SHOULD BE ADDED TO AUTH MUX AFTER COMPLETION
 
 	mux.HandleFunc("DELETE /dev/v1/admin/user", app.deleteUser) // NEEDS TESTING
+
+	// mux.Handle("/dev/v1/auth", auth)
 
 	c := cors.New(cors.Options{
 		AllowedOrigins: []string{"*"},
@@ -73,6 +74,10 @@ func (app *application) mount() http.Handler {
 func (app *application) mountAuth() http.Handler {
 	authHandler := http.NewServeMux()
 	authHandler.HandleFunc("POST /test", app.getUser)
+	authHandler.HandleFunc("/health", app.GetHealth)
+
+	authHandler.HandleFunc("POST /libs/libid", app.getBooksByLib)
+
 	return http.StripPrefix("/dev/v1/auth", authHandler)
 }
 
