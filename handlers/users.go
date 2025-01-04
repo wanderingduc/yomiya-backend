@@ -42,7 +42,7 @@ func CreateUser(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 	newUser = request.User
 
-	query := "INSERT INTO users(username, passwd, created_at) VALUES(?, ?, CURRENT_TIMESTAMP())"
+	query := "INSERT INTO users(username, passwd, created_at, updated_at) VALUES(?, ?, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP())"
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 	hashPass, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
@@ -74,9 +74,10 @@ func CreateUser(r *http.Request, db *sql.DB) (responses.Response, int) {
 		return response, http.StatusInternalServerError
 	}
 
+	newUser.Jwt = token
+
 	response.Success = true
-	response.Data.User = newUser
-	response.Data.User.Jwt = token
+	response.Data.User = []responses.ResponseUser{newUser}
 
 	return response, http.StatusCreated
 
@@ -105,7 +106,7 @@ func GetUserByID(r *http.Request, db *sql.DB) (responses.Response, int) {
 	query := "SELECT * FROM users WHERE username = ?"
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
-	err = db.QueryRowContext(ctx, query, user.Username).Scan(&user.Username, &user.Password, &user.Jwt)
+	err = db.QueryRowContext(ctx, query, user.Username).Scan(&user.Username, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		log.Println(err.Error())
 		errResponse := responses.ResponseError{
@@ -117,7 +118,7 @@ func GetUserByID(r *http.Request, db *sql.DB) (responses.Response, int) {
 	}
 
 	response.Success = true
-	response.Data.User = user
+	response.Data.User = []responses.ResponseUser{user}
 
 	return response, http.StatusAccepted
 
@@ -174,9 +175,10 @@ func AuthUser(r *http.Request, db *sql.DB) (responses.Response, int) {
 		return response, http.StatusInternalServerError
 	}
 
+	toAuth.Jwt = token
+
 	response.Success = true
-	response.Data.User.Username = toAuth.Username
-	response.Data.User.Jwt = token
+	response.Data.User = []responses.ResponseUser{toAuth}
 
 	return response, http.StatusAccepted
 

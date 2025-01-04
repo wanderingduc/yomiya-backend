@@ -4,7 +4,8 @@ USE test_db;
 CREATE TABLE users(
     username VARCHAR(255) PRIMARY KEY,
     passwd VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE authors(
@@ -25,9 +26,7 @@ CREATE TABLE libs(
     lib_id VARCHAR(255) PRIMARY KEY,
     lib_name VARCHAR(255) NOT NULL,
     user_fk VARCHAR(255),
-    -- book_fk VARCHAR(13), -- CHECK IF CHANGE MADE TO DB
-    FOREIGN KEY (user_fk) REFERENCES users(username),
-    -- FOREIGN KEY (book_fk) REFERENCES books(book_id) -- REMOVE IF book_fk DELETED
+    FOREIGN KEY (user_fk) REFERENCES users(username)
 );
 
 CREATE TABLE lib(
@@ -47,5 +46,5 @@ CREATE TABLE new_books(
     FOREIGN KEY (user_fk) REFERENCES users(username)
 );
 
-ALTER TABLE books ADD FULLTEXT(title, author);
+ALTER TABLE books ADD FULLTEXT(title, author_fk);
 ALTER TABLE libs ADD FULLTEXT(lib_id, lib_name);

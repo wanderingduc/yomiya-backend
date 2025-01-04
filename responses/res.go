@@ -15,9 +15,11 @@ type JSONError struct {
 }
 
 type ResponseUser struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Jwt      string `json:"token"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+	Jwt       string `json:"token"`
 }
 
 type Book struct {
@@ -44,10 +46,10 @@ type ResponseError struct {
 }
 
 type ResponseData struct {
-	User  ResponseUser  `json:"user"`
-	Books []Book        `json:"books"`
-	Libs  []Lib         `json:"libs"`
-	Err   ResponseError `json:"error"`
+	User  []ResponseUser `json:"user"`
+	Books []Book         `json:"books"`
+	Libs  []Lib          `json:"libs"`
+	Err   ResponseError  `json:"error"`
 }
 
 type ResponseMeta struct {
