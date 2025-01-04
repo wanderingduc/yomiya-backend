@@ -64,8 +64,19 @@ func CreateUser(r *http.Request, db *sql.DB) (responses.Response, int) {
 		return response, http.StatusInternalServerError
 	}
 
+	token, err := auth.CreateJWT(newUser.Username)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusInternalServerError
+	}
+
 	response.Success = true
 	response.Data.User = newUser
+	response.Data.User.Jwt = token
 
 	return response, http.StatusCreated
 

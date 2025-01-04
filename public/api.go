@@ -56,6 +56,7 @@ func (app *application) mount() http.Handler {
 
 	// ADMIN ROUTES SHOULD BE ADDED TO AUTH MUX AFTER COMPLETION
 
+	mux.HandleFunc("POST /dev/v1/admin/admin", app.createAdmin)
 	mux.HandleFunc("DELETE /dev/v1/admin/user", app.deleteUser) // NEEDS TESTING
 
 	// mux.Handle("/dev/v1/auth", auth)
