@@ -65,6 +65,21 @@ func (app *application) authToken(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (app *application) reportBug(w http.ResponseWriter, r *http.Request) {
+
+	response, status := handlers.ReportBug(r, app.db)
+
+	w.WriteHeader(status)
+	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(response)
+	if err != nil {
+		log.Println(err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+}
+
 func (app *application) testGet(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(200)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -113,6 +114,8 @@ func GetBooks(r *http.Request, db *sql.DB) (responses.Response, int) {
 		books = append(books, book)
 	}
 
+	log.Print(books)
+
 	response.Data.Books = books
 	return response, http.StatusAccepted
 }
@@ -121,6 +124,7 @@ func GetBooksBySearch(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 	var request responses.Request
 	var response responses.Response
+	var user responses.ResponseUser
 	var books []responses.Book
 	var reqBooks responses.Book
 
@@ -133,9 +137,12 @@ func GetBooksBySearch(r *http.Request, db *sql.DB) (responses.Response, int) {
 		response.Data.Err = responses.ResponseError(errResponse)
 		return response, http.StatusBadRequest
 	}
-	reqBooks = request.Book
 
-	query := "SELECT * FROM books WHERE MATCH(title, author_fk) AGAINST(? IN NATURAL LANGUAGE MODE)"
+	user = request.User
+	reqBooks = request.Book
+	log.Println(reqBooks.ID)
+
+	query := "SELECT book_id, title, author_fk FROM books WHERE MATCH(title, author_fk) AGAINST(? IN NATURAL LANGUAGE MODE)"
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second*2)
 	defer cancel()
 	rows, err := db.QueryContext(ctx, query, reqBooks.ID)
@@ -149,8 +156,24 @@ func GetBooksBySearch(r *http.Request, db *sql.DB) (responses.Response, int) {
 	}
 	books = compileBooks(rows, books)
 
+	query = "SELECT book_id, title, author FROM new_books WHERE MATCH(title, author) AGAINST(? IN NATURAL LANGUAGE MODE) AND user_fk = ?"
+	ctx, cancel = context.WithTimeout(ctx, time.Second*2)
+	defer cancel()
+	rows, err = db.QueryContext(ctx, query, reqBooks.ID, user.Username)
+	if err != nil {
+		errResponse := responses.JSONError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = responses.ResponseError(errResponse)
+		return response, http.StatusNotFound
+	}
+	books = compileBooks(rows, books)
+
 	response.Success = true
 	response.Data.Books = books
+
+	log.Println(books)
 
 	return response, http.StatusOK
 
@@ -246,12 +269,14 @@ func SearchBooksByLib(r *http.Request, db *sql.DB) (responses.Response, int) {
 func compileBooks(rows *sql.Rows, books []responses.Book) []responses.Book {
 	for {
 		var book responses.Book
+		var id uint64
 		rows.Next()
-		err := rows.Scan(&book.ID, &book.Title, &book.Author)
+		err := rows.Scan(&id, &book.Title, &book.Author)
 		if err != nil {
 			// log.Println(err.Error())
 			break
 		}
+		book.ID = fmt.Sprintf("%d", id)
 		books = append(books, book)
 	}
 	return books

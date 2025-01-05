@@ -14,6 +14,45 @@ type Lib struct {
 	Libname string
 }
 
+func CreateLib(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
+	var user responses.ResponseUser
+	var lib responses.Lib
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
+	}
+
+	user = request.User
+	lib = request.Lib
+
+	query := "INSERT INTO libs(lib_id, lib_name, user_fk) VALUES(?, ?, ?)"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	_, err = db.QueryContext(ctx, query, user.Username+lib.LibName, lib.LibName, user.Username)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusInternalServerError
+	}
+
+	response.Success = true
+
+	return response, http.StatusAccepted
+
+}
+
 func GetLibs(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 	var request responses.Request
@@ -149,6 +188,7 @@ func AddBookToLib(r *http.Request, db *sql.DB) (responses.Response, int) {
 	defer cancel()
 	_, err = db.QueryContext(ctx, query, lib.LibId, book.ID, user.Username)
 	if err != nil {
+		log.Println(err.Error())
 		errResponse := responses.ResponseError{
 			Err: err.Error(),
 		}

@@ -214,3 +214,40 @@ func AuthToken(r *http.Request, db *sql.DB) (responses.Response, int) {
 
 	return response, http.StatusAccepted
 }
+
+func ReportBug(r *http.Request, db *sql.DB) (responses.Response, int) {
+
+	var request responses.Request
+	var response responses.Response
+	var user responses.ResponseUser
+
+	err := json.NewDecoder(r.Body).Decode(&request)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
+	}
+
+	user = request.User
+
+	query := "INSERT INTO reports(user_fk, bug) VALUES(?, ?)"
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
+	defer cancel()
+	_, err = db.QueryContext(ctx, query, user.Username, user.Jwt)
+	if err != nil {
+		errResponse := responses.ResponseError{
+			Err: err.Error(),
+		}
+		response.Success = false
+		response.Data.Err = errResponse
+		return response, http.StatusBadRequest
+	}
+
+	response.Success = true
+
+	return response, http.StatusAccepted
+
+}

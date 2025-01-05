@@ -68,8 +68,6 @@ func (app *application) getBooksBySearch(w http.ResponseWriter, r *http.Request)
 
 func (app *application) getBooksByLib(w http.ResponseWriter, r *http.Request) {
 
-	log.Println("Gettingbooks")
-
 	response, status := handlers.GetBooksByLib(r, app.db)
 
 	log.Println(status)
